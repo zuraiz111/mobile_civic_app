@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "CitizenConnect",
+    "slug": "citizen-connect",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#22c55e"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.citizenconnect.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to capture photos of issues you want to report.",
+        "NSPhotoLibraryUsageDescription": "This app accesses your photo library to attach images to your reports.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to pinpoint the exact location of reported issues."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#22c55e"
+      },
+      "package": "com.citizenconnect.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "scheme": "citizenconnect",
+    "plugins": [
+      "expo-router",
+      "expo-image-picker",
+      "expo-location",
+      "expo-font",
+      "expo-asset",
+      "expo-splash-screen"
+    ]
+  }
+}

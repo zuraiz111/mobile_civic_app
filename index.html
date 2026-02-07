@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CitizenConnect - Issue Reporting App</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            border-radius: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            position: relative;
+        }
+        .notch {
+            width: 150px;
+            height: 30px;
+            background: #000;
+            border-radius: 0 0 20px 20px;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+        .screen { height: 100%; overflow-y: auto; padding-top: 40px; padding-bottom: 80px; }
+        .screen::-webkit-scrollbar { display: none; }
+        .tab-bar { position: absolute; bottom: 0; left: 0; right: 0; }
+        .flatlist-item { transition: all 0.2s ease; }
+        .flatlist-item:active { transform: scale(0.98); opacity: 0.9; }
+        .status-badge { font-size: 10px; padding: 2px 8px; border-radius: 12px; }
+        .timeline-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .timeline-line { width: 2px; height: 30px; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .animate-pulse { animation: pulse 2s infinite; }
+        .slide-up { animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen flex items-center justify-center p-4">
+    <div class="text-center text-white mr-8 hidden lg:block">
+        <h1 class="text-4xl font-bold mb-4">🏛️ CitizenConnect</h1>
+        <p class="text-slate-300 mb-6 max-w-xs">Smart City Issue Reporting Platform</p>
+        <div class="flex gap-4 justify-center">
+            <button onclick="switchMode('user')" id="userModeBtn" class="px-6 py-3 bg-green-500 rounded-xl font-semibold hover:bg-green-600 transition">
+                👤 Citizen Mode
+            </button>
+            <button onclick="switchMode('admin')" id="adminModeBtn" class="px-6 py-3 bg-slate-700 rounded-xl font-semibold hover:bg-slate-600 transition">
+                🔐 Admin Mode
+            </button>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-black">
+        <div class="notch"></div>
+        
+        <!-- User App -->
+        <div id="userApp" class="h-full bg-gray-50">
+            <!-- Screens Container -->
+            <div id="userScreens" class="h-full">
+                
+                <!-- Home Screen -->
+                <div id="homeScreen" class="screen bg-gray-50 px-4">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-gray-800">Welcome Back! 👋</h1>
+                        <p class="text-gray-500">Report issues in your community</p>
+                    </div>
+                    
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-4 rounded-2xl text-white">
+                            <p class="text-3xl font-bold" id="userTotalReports">3</p>
+                            <p class="text-blue-100 text-sm">My Reports</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-amber-500 to-orange-500 p-4 rounded-2xl text-white">
+                            <p class="text-3xl font-bold" id="userPendingReports">1</p>
+                            <p class="text-amber-100 text-sm">Pending</p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Report Button -->
+                    <button onclick="showScreen('reportScreen')" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-2xl font-semibold text-lg mb-6 flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 active:scale-98">
+                        <span class="text-2xl">📝</span> Report New Issue
+                    </button>
+
+                    <!-- Categories -->
+                    <h2 class="font-semibold text-gray-800 mb-3">Quick Categories</h2>
+                    <div class="grid grid-cols-4 gap-2 mb-6">
+                        <button onclick="selectCategory('Garbage')" class="bg-white p-3 rounded-xl flex flex-col items-center shadow-sm">
+                            <span class="text-2xl mb-1">🗑️</span>
+                            <span class="text-xs text-gray-600">Garbage</span>
+                        </button>
+                        <button onclick="selectCategory('Electricity')" class="bg-white p-3 rounded-xl flex flex-col items-center shadow-sm">
+                            <span class="text-2xl mb-1">⚡</span>
+                            <span class="text-xs text-gray-600">Electric</span>
+                        </button>
+                        <button onclick="selectCategory('Water')" class="bg-white p-3 rounded-xl flex flex-col items-center shadow-sm">
+                            <span class="text-2xl mb-1">💧</span>
+                            <span class="text-xs text-gray-600">Water</span>
+                        </button>
+                        <button onclick="selectCategory('Gas')" class="bg-white p-3 rounded-xl flex flex-col items-center shadow-sm">
+                            <span class="text-2xl mb-1">🔥</span>
+                            <span class="text-xs text-gray-600">Gas</span>
+                        </button>
+                        <button onclick="selectCategory('Roads')" class="bg-white p-3 rounded-xl flex flex-col items-center shadow-sm">
+                            <span class="text-2xl mb-1">🛣️</span>
+                            <span class="text-xs text-gray-600">Roads</span>
+                        </button>
+                        <button onclick="selectCategory('Sewerage')" class="bg-white p-3 rounded-xl flex flex-col items-center shadow-sm">
+                            <span class="text-2xl mb-1">🚰</span>
+                            <span class="text-xs text-gray-600">Sewage</span>
+                        </button>
+                        <button onclick="selectCategory('Streetlights')" class="bg-white p-3 rounded-xl flex flex-col items-center shadow-sm">
+                            <span class="text-2xl mb-1">💡</span>
+                            <span class="text-xs text-gray-600">Lights</span>
+                        </button>
+                        <button onclick="selectCategory('Other')" class="bg-white p-3 rounded-xl flex flex-col items-center shadow-sm">
+                            <span class="text-2xl mb-1">📋</span>
+                            <span class="text-xs text-gray-600">Other</span>
+                        </button>
+                    </div>
+
+                    <!-- Recent Reports -->
+                    <h2 class="font-semibold text-gray-800 mb-3">Recent Activity</h2>
+                    <div id="recentReportsList" class="space-y-3"></div>
+                </div>
+
+                <!-- Report Screen -->
+                <div id="reportScreen" class="screen bg-gray-50 px-4 hidden">
+                    <div class="flex items-center mb-6">
+                        <button onclick="showScreen('homeScreen')" class="p-2 -ml-2">
+                            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <h1 class="text-xl font-bold text-gray-800 ml-2">Report Issue</h1>
+                    </div>
+
+                    <!-- Step Indicator -->
+                    <div class="flex items-center justify-center mb-6">
+                        <div class="flex items-center">
+                            <div id="step1Dot" class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">1</div>
+                            <div id="step1Line" class="w-12 h-1 bg-gray-300"></div>
+                            <div id="step2Dot" class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 text-sm font-semibold">2</div>
+                            <div id="step2Line" class="w-12 h-1 bg-gray-300"></div>
+                            <div id="step3Dot" class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 text-sm font-semibold">3</div>
+                        </div>
+                    </div>
+
+                    <!-- Step 1: Category & Title -->
+                    <div id="step1" class="slide-up">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                            <select id="categorySelect" class="w-full p-3 border border-gray-300 rounded-xl bg-white">
+                                <option value="">Select Category</option>
+                                <option value="Garbage">🗑️ Garbage</option>
+                                <option value="Electricity">⚡ Electricity</option>
+                                <option value="Water">💧 Water Supply</option>
+                                <option value="Gas">🔥 Sui Gas</option>
+                                <option value="Roads">🛣️ Roads & Infrastructure</option>
+                                <option value="Sewerage">🚰 Sewerage</option>
+                                <option value="Streetlights">💡 Street Lights</option>
+                                <option value="Other">📋 Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Issue Title</label>
+                            <input type="text" id="titleInput" placeholder="Brief title of the issue" class="w-full p-3 border border-gray-300 rounded-xl">
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                            <textarea id="descInput" rows="4" placeholder="Describe the issue in detail..." class="w-full p-3 border border-gray-300 rounded-xl resize-none"></textarea>
+                        </div>
+                        <button onclick="goToStep(2)" class="w-full bg-green-500 text-white py-3 rounded-xl font-semibold">Next: Add Photo →</button>
+                    </div>
+
+                    <!-- Step 2: Photo -->
+                    <div id="step2" class="slide-up hidden">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Add Photo Evidence</label>
+                            <div id="photoPreview" class="w-full h-48 bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center mb-4">
+                                <div class="text-center">
+                                    <span class="text-4xl">📷</span>
+                                    <p class="text-gray-500 text-sm mt-2">No photo selected</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <button onclick="simulateCamera()" class="flex-1 bg-blue-500 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2">
+                                    📸 Camera
+                                </button>
+                                <button onclick="simulateGallery()" class="flex-1 bg-purple-500 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2">
+                                    🖼️ Gallery
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 mt-6">
+                            <button onclick="goToStep(1)" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold">← Back</button>
+                            <button onclick="goToStep(3)" class="flex-1 bg-green-500 text-white py-3 rounded-xl font-semibold">Next: Location →</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Location -->
+                    <div id="step3" class="slide-up hidden">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Select Location</label>
+                            <div id="mapPreview" class="w-full h-48 bg-gradient-to-br from-green-100 to-blue-100 rounded-xl overflow-hidden relative mb-4">
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="text-center">
+                                        <span class="text-5xl">📍</span>
+                                        <p class="text-gray-600 text-sm mt-2" id="locationText">Tap to select location</p>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-2 right-2">
+                                    <button onclick="getCurrentLocation()" class="bg-white p-2 rounded-full shadow-lg">
+                                        <span class="text-xl">🎯</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Or Select Landmark</label>
+                                <select id="landmarkSelect" class="w-full p-3 border border-gray-300 rounded-xl bg-white" onchange="selectLandmark()">
+                                    <option value="">Choose nearby landmark</option>
+                                    <option value="City Hall">🏛️ City Hall</option>
+                                    <option value="Central Park">🌳 Central Park</option>
+                                    <option value="Main Market">🏪 Main Market</option>
+                                    <option value="General Hospital">🏥 General Hospital</option>
+                                    <option value="Bus Station">🚌 Bus Station</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 mt-6">
+                            <button onclick="goToStep(2)" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold">← Back</button>
+                            <button onclick="submitReport()" class="flex-1 bg-green-500 text-white py-3 rounded-xl font-semibold">Submit Report ✓</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Reports Screen -->
+                <div id="myReportsScreen" class="screen bg-gray-50 px-4 hidden">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-2">My Reports</h1>
+                    <p class="text-gray-500 mb-4">Track all your submitted reports</p>
+                    
+                    <!-- Filter Tabs -->
+                    <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+                        <button onclick="filterUserReports('all')" class="filter-btn px-4 py-2 bg-green-500 text-white rounded-full text-sm font-medium whitespace-nowrap" data-filter="all">All</button>
+                        <button onclick="filterUserReports('Pending')" class="filter-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-medium whitespace-nowrap" data-filter="Pending">Pending</button>
+                        <button onclick="filterUserReports('In Progress')" class="filter-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-medium whitespace-nowrap" data-filter="In Progress">In Progress</button>
+                        <button onclick="filterUserReports('Resolved')" class="filter-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-medium whitespace-nowrap" data-filter="Resolved">Resolved</button>
+                    </div>
+                    
+                    <!-- FlatList -->
+                    <div id="myReportsList" class="space-y-3"></div>
+                </div>
+
+                <!-- Report Detail Screen -->
+                <div id="reportDetailScreen" class="screen bg-gray-50 px-4 hidden">
+                    <div class="flex items-center mb-4">
+                        <button onclick="showScreen('myReportsScreen')" class="p-2 -ml-2">
+                            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <h1 class="text-xl font-bold text-gray-800 ml-2">Report Details</h1>
+                    </div>
+                    
+                    <div id="reportDetailContent"></div>
+                </div>
+
+                <!-- Profile Screen -->
+                <div id="profileScreen" class="screen bg-gray-50 px-4 hidden">
+                    <div class="text-center mb-6">
+                        <div class="w-24 h-24 bg-gradient-to-br from-green-400 to-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl">
+                            👤
+                        </div>
+                        <h1 class="text-xl font-bold text-gray-800">John Citizen</h1>
+                        <p class="text-gray-500">john.citizen@email.com</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl p-4 mb-4 shadow-sm">
+                        <h2 class="font-semibold text-gray-800 mb-3">Statistics</h2>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <p class="text-2xl font-bold text-blue-500" id="profileTotal">3</p>
+                                <p class="text-xs text-gray-500">Total</p>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-green-500" id="profileResolved">1</p>
+                                <p class="text-xs text-gray-500">Resolved</p>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-amber-500" id="profilePending">1</p>
+                                <p class="text-xs text-gray-500">Pending</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                        <button class="w-full p-4 flex items-center justify-between border-b">
+                            <span class="flex items-center gap-3"><span>⚙️</span> Settings</span>
+                            <span class="text-gray-400">›</span>
+                        </button>
+                        <button class="w-full p-4 flex items-center justify-between border-b">
+                            <span class="flex items-center gap-3"><span>🔔</span> Notifications</span>
+                            <span class="text-gray-400">›</span>
+                        </button>
+                        <button class="w-full p-4 flex items-center justify-between border-b">
+                            <span class="flex items-center gap-3"><span>❓</span> Help & Support</span>
+                            <span class="text-gray-400">›</span>
+                        </button>
+                        <button class="w-full p-4 flex items-center justify-between text-red-500">
+                            <span class="flex items-center gap-3"><span>🚪</span> Logout</span>
+                            <span class="text-gray-400">›</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Bar -->
+            <div class="tab-bar bg-white border-t border-gray-200 px-6 py-3 flex justify-around items-center">
+                <button onclick="showScreen('homeScreen')" class="tab-btn flex flex-col items-center" data-screen="homeScreen">
+                    <span class="text-xl">🏠</span>
+                    <span class="text-xs text-green-500 font-medium">Home</span>
+                </button>
+                <button onclick="showScreen('myReportsScreen')" class="tab-btn flex flex-col items-center" data-screen="myReportsScreen">
+                    <span class="text-xl">📋</span>
+                    <span class="text-xs text-gray-500">Reports</span>
+                </button>
+                <button onclick="showScreen('reportScreen')" class="tab-btn flex flex-col items-center bg-green-500 -mt-6 w-14 h-14 rounded-full justify-center shadow-lg" data-screen="reportScreen">
+                    <span class="text-2xl">➕</span>
+                </button>
+                <button onclick="showScreen('profileScreen')" class="tab-btn flex flex-col items-center" data-screen="profileScreen">
+                    <span class="text-xl">👤</span>
+                    <span class="text-xs text-gray-500">Profile</span>
+                </button>
+                <button class="tab-btn flex flex-col items-center">
+                    <span class="text-xl">🔔</span>
+                    <span class="text-xs text-gray-500">Alerts</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Admin App -->
+        <div id="adminApp" class="h-full bg-slate-900 hidden">
+            <!-- Admin Screens -->
+            <div id="adminScreens" class="h-full">
+                
+                <!-- Admin Login -->
+                <div id="adminLoginScreen" class="screen bg-slate-900 px-6 flex flex-col justify-center hidden">
+                    <div class="text-center mb-8">
+                        <span class="text-6xl">🔐</span>
+                        <h1 class="text-2xl font-bold text-white mt-4">Admin Portal</h1>
+                        <p class="text-slate-400">Secure access for authorized personnel</p>
+                    </div>
+                    <div class="space-y-4">
+                        <input type="text" placeholder="Employee ID" class="w-full p-4 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500">
+                        <input type="password" placeholder="Password" class="w-full p-4 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500">
+                        <button onclick="adminLogin()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl font-semibold">
+                            Login →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Admin Dashboard -->
+                <div id="adminDashboard" class="screen bg-slate-900 px-4">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h1 class="text-xl font-bold text-white">Dashboard</h1>
+                            <p class="text-slate-400 text-sm">Welcome, Admin</p>
+                        </div>
+                        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                            <span>👤</span>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div class="bg-slate-800 p-4 rounded-2xl">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-slate-400 text-sm">Total Reports</span>
+                                <span class="text-2xl">📊</span>
+                            </div>
+                            <p class="text-3xl font-bold text-white" id="adminTotalReports">12</p>
+                            <p class="text-green-400 text-xs">+3 today</p>
+                        </div>
+                        <div class="bg-slate-800 p-4 rounded-2xl">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-slate-400 text-sm">Pending</span>
+                                <span class="text-2xl">⏳</span>
+                            </div>
+                            <p class="text-3xl font-bold text-amber-400" id="adminPendingReports">4</p>
+                            <p class="text-amber-400 text-xs animate-pulse">Needs attention</p>
+                        </div>
+                        <div class="bg-slate-800 p-4 rounded-2xl">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-slate-400 text-sm">In Progress</span>
+                                <span class="text-2xl">🔄</span>
+                            </div>
+                            <p class="text-3xl font-bold text-blue-400" id="adminProgressReports">5</p>
+                        </div>
+                        <div class="bg-slate-800 p-4 rounded-2xl">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-slate-400 text-sm">Resolved</span>
+                                <span class="text-2xl">✅</span>
+                            </div>
+                            <p class="text-3xl font-bold text-green-400" id="adminResolvedReports">3</p>
+                        </div>
+                    </div>
+
+                    <!-- Department Stats -->
+                    <h2 class="text-white font-semibold mb-3">By Department</h2>
+                    <div class="bg-slate-800 rounded-2xl p-4 mb-6">
+                        <div id="departmentStats" class="space-y-3"></div>
+                    </div>
+
+                    <!-- Recent Reports -->
+                    <h2 class="text-white font-semibold mb-3">Recent Reports</h2>
+                    <div id="adminRecentReports" class="space-y-3"></div>
+                </div>
+
+                <!-- Admin Reports List -->
+                <div id="adminReportsScreen" class="screen bg-slate-900 px-4 hidden">
+                    <h1 class="text-xl font-bold text-white mb-2">All Reports</h1>
+                    <p class="text-slate-400 text-sm mb-4">Manage and assign reports</p>
+                    
+                    <!-- Filters -->
+                    <div class="flex gap-2 mb-3 overflow-x-auto pb-2">
+                        <button onclick="filterAdminReports('all')" class="admin-filter-btn px-4 py-2 bg-purple-500 text-white rounded-full text-sm font-medium whitespace-nowrap" data-filter="all">All</button>
+                        <button onclick="filterAdminReports('Pending')" class="admin-filter-btn px-4 py-2 bg-slate-700 text-slate-300 rounded-full text-sm font-medium whitespace-nowrap" data-filter="Pending">Pending</button>
+                        <button onclick="filterAdminReports('Assigned')" class="admin-filter-btn px-4 py-2 bg-slate-700 text-slate-300 rounded-full text-sm font-medium whitespace-nowrap" data-filter="Assigned">Assigned</button>
+                        <button onclick="filterAdminReports('In Progress')" class="admin-filter-btn px-4 py-2 bg-slate-700 text-slate-300 rounded-full text-sm font-medium whitespace-nowrap" data-filter="In Progress">In Progress</button>
+                        <button onclick="filterAdminReports('Resolved')" class="admin-filter-btn px-4 py-2 bg-slate-700 text-slate-300 rounded-full text-sm font-medium whitespace-nowrap" data-filter="Resolved">Resolved</button>
+                    </div>
+                    
+                    <!-- Department Filter -->
+                    <select id="deptFilter" onchange="filterByDepartment()" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-white mb-4">
+                        <option value="all">All Departments</option>
+                        <option value="Garbage">🗑️ Garbage</option>
+                        <option value="Electricity">⚡ Electricity</option>
+                        <option value="Water">💧 Water</option>
+                        <option value="Gas">🔥 Sui Gas</option>
+                        <option value="Roads">🛣️ Roads</option>
+                    </select>
+                    
+                    <!-- Reports FlatList -->
+                    <div id="adminReportsList" class="space-y-3"></div>
+                </div>
+
+                <!-- Admin Report Detail -->
+                <div id="adminReportDetailScreen" class="screen bg-slate-900 px-4 hidden">
+                    <div class="flex items-center mb-4">
+                        <button onclick="showAdminScreen('adminReportsScreen')" class="p-2 -ml-2">
+                            <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <h1 class="text-xl font-bold text-white ml-2">Manage Report</h1>
+                    </div>
+                    
+                    <div id="adminReportDetailContent"></div>
+                </div>
+            </div>
+
+            <!-- Admin Tab Bar -->
+            <div class="tab-bar bg-slate-800 border-t border-slate-700 px-6 py-3 flex justify-around items-center">
+                <button onclick="showAdminScreen('adminDashboard')" class="admin-tab-btn flex flex-col items-center" data-screen="adminDashboard">
+                    <span class="text-xl">📊</span>
+                    <span class="text-xs text-purple-400 font-medium">Dashboard</span>
+                </button>
+                <button onclick="showAdminScreen('adminReportsScreen')" class="admin-tab-btn flex flex-col items-center" data-screen="adminReportsScreen">
+                    <span class="text-xl">📋</span>
+                    <span class="text-xs text-slate-500">Reports</span>
+                </button>
+                <button class="admin-tab-btn flex flex-col items-center">
+                    <span class="text-xl">👥</span>
+                    <span class="text-xs text-slate-500">Teams</span>
+                </button>
+                <button class="admin-tab-btn flex flex-col items-center">
+                    <span class="text-xl">⚙️</span>
+                    <span class="text-xs text-slate-500">Settings</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+        <span id="toastMessage">Success!</span>
+    </div>
+
+    <script>
+        // ==================== DATA ====================
+        const departments = [
+            { id: 'Garbage', name: 'Garbage', icon: '🗑️', color: 'bg-green-500' },
+            { id: 'Electricity', name: 'Electricity', icon: '⚡', color: 'bg-yellow-500' },
+            { id: 'Water', name: 'Water Supply', icon: '💧', color: 'bg-blue-500' },
+            { id: 'Gas', name: 'Sui Gas', icon: '🔥', color: 'bg-orange-500' },
+            { id: 'Roads', name: 'Roads', icon: '🛣️', color: 'bg-gray-500' },
+            { id: 'Sewerage', name: 'Sewerage', icon: '🚰', color: 'bg-teal-500' },
+            { id: 'Streetlights', name: 'Street Lights', icon: '💡', color: 'bg-amber-500' },
+        ];
+
+        let reports = [
+            { id: 1, title: 'Broken Street Light', category: 'Streetlights', description: 'Street light at corner of Main St has been out for a week', location: 'Main Street', status: 'In Progress', department: 'Streetlights', createdAt: '2024-01-15', photo: true, userId: 1, timeline: [
+                { status: 'Pending', date: '2024-01-15 09:00', note: 'Report submitted' },
+                { status: 'Assigned', date: '2024-01-15 14:30', note: 'Assigned to Street Lights dept' },
+                { status: 'In Progress', date: '2024-01-16 10:00', note: 'Technician dispatched' }
+            ]},
+            { id: 2, title: 'Garbage not collected', category: 'Garbage', description: 'Garbage has not been collected for 3 days in our area', location: 'Block 5, Sector 11', status: 'Pending', department: null, createdAt: '2024-01-18', photo: true, userId: 1, timeline: [
+                { status: 'Pending', date: '2024-01-18 08:00', note: 'Report submitted' }
+            ]},
+            { id: 3, title: 'Water leakage', category: 'Water', description: 'Major water pipe leakage causing flooding', location: 'Central Park', status: 'Resolved', department: 'Water', createdAt: '2024-01-10', photo: true, userId: 1, timeline: [
+                { status: 'Pending', date: '2024-01-10 07:00', note: 'Report submitted' },
+                { status: 'Assigned', date: '2024-01-10 09:00', note: 'Assigned to Water dept' },
+                { status: 'In Progress', date: '2024-01-10 11:00', note: 'Repair crew on site' },
+                { status: 'Resolved', date: '2024-01-11 15:00', note: 'Pipe repaired successfully' }
+            ]},
+            { id: 4, title: 'Pothole on highway', category: 'Roads', description: 'Large pothole causing traffic issues', location: 'Highway 7', status: 'Assigned', department: 'Roads', createdAt: '2024-01-17', photo: false, userId: 2, timeline: [
+                { status: 'Pending', date: '2024-01-17 10:00', note: 'Report submitted' },
+                { status: 'Assigned', date: '2024-01-18 09:00', note: 'Assigned to Roads dept' }
+            ]},
+            { id: 5, title: 'Gas smell in area', category: 'Gas', description: 'Strong gas smell near the market', location: 'Main Market', status: 'In Progress', department: 'Gas', createdAt: '2024-01-18', photo: false, userId: 2, timeline: [
+                { status: 'Pending', date: '2024-01-18 06:00', note: 'Report submitted - URGENT' },
+                { status: 'Assigned', date: '2024-01-18 06:30', note: 'Emergency assigned to Gas dept' },
+                { status: 'In Progress', date: '2024-01-18 07:00', note: 'Emergency team dispatched' }
+            ]},
+            { id: 6, title: 'Electricity outage', category: 'Electricity', description: 'No electricity in block for 6 hours', location: 'Block 12', status: 'Pending', department: null, createdAt: '2024-01-19', photo: true, userId: 3, timeline: [
+                { status: 'Pending', date: '2024-01-19 14:00', note: 'Report submitted' }
+            ]}
+        ];
+
+        let currentMode = 'user';
+        let currentStep = 1;
+        let selectedPhoto = false;
+        let selectedLocation = '';
+        let currentFilter = 'all';
+        let currentDeptFilter = 'all';
+
+        // ==================== NAVIGATION ====================
+        function switchMode(mode) {
+            currentMode = mode;
+            document.getElementById('userApp').classList.toggle('hidden', mode !== 'user');
+            document.getElementById('adminApp').classList.toggle('hidden', mode !== 'admin');
+            document.getElementById('userModeBtn').classList.toggle('bg-green-500', mode === 'user');
+            document.getElementById('userModeBtn').classList.toggle('bg-slate-700', mode !== 'user');
+            document.getElementById('adminModeBtn').classList.toggle('bg-purple-500', mode === 'admin');
+            document.getElementById('adminModeBtn').classList.toggle('bg-slate-700', mode !== 'admin');
+            
+            if (mode === 'admin') {
+                showAdminScreen('adminDashboard');
+                updateAdminDashboard();
+            } else {
+                showScreen('homeScreen');
+                updateUserStats();
+            }
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('#userScreens > div').forEach(s => s.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+            
+            // Update tab bar
+            document.querySelectorAll('.tab-btn span:last-child').forEach(s => {
+                s.classList.remove('text-green-500');
+                s.classList.add('text-gray-500');
+            });
+            const activeTab = document.querySelector(`.tab-btn[data-screen="${screenId}"]`);
+            if (activeTab) {
+                activeTab.querySelector('span:last-child')?.classList.add('text-green-500');
+                activeTab.querySelector('span:last-child')?.classList.remove('text-gray-500');
+            }
+            
+            if (screenId === 'homeScreen') {
+                renderRecentReports();
+                updateUserStats();
+            } else if (screenId === 'myReportsScreen') {
+                renderMyReports();
+            } else if (screenId === 'reportScreen') {
+                resetReportForm();
+            }
+        }
+
+        function showAdminScreen(screenId) {
+            document.querySelectorAll('#adminScreens > div').forEach(s => s.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+            
+            // Update tab bar
+            document.querySelectorAll('.admin-tab-btn span:last-child').forEach(s => {
+                s.classList.remove('text-purple-400');
+                s.classList.add('text-slate-500');
+            });
+            const activeTab = document.querySelector(`.admin-tab-btn[data-screen="${screenId}"]`);
+            if (activeTab) {
+                activeTab.querySelector('span:last-child')?.classList.add('text-purple-400');
+                activeTab.querySelector('span:last-child')?.classList.remove('text-slate-500');
+            }
+            
+            if (screenId === 'adminDashboard') {
+                updateAdminDashboard();
+                renderAdminRecentReports();
+            } else if (screenId === 'adminReportsScreen') {
+                renderAdminReports();
+            }
+        }
+
+        // ==================== USER FUNCTIONS ====================
+        function updateUserStats() {
+            const userReports = reports.filter(r => r.userId === 1);
+            document.getElementById('userTotalReports').textContent = userReports.length;
+            document.getElementById('userPendingReports').textContent = userReports.filter(r => r.status === 'Pending').length;
+            document.getElementById('profileTotal').textContent = userReports.length;
+            document.getElementById('profileResolved').textContent = userReports.filter(r => r.status === 'Resolved').length;
+            document.getElementById('profilePending').textContent = userReports.filter(r => r.status === 'Pending').length;
+        }
+
+        function selectCategory(category) {
+            document.getElementById('categorySelect').value = category;
+            showScreen('reportScreen');
+        }
+
+        function goToStep(step) {
+            // Validate current step
+            if (step > currentStep) {
+                if (currentStep === 1) {
+                    if (!document.getElementById('categorySelect').value || !document.getElementById('titleInput').value) {
+                        showToast('Please fill in all required fields', 'error');
+                        return;
+                    }
+                }
+            }
+            
+            currentStep = step;
+            document.querySelectorAll('[id^="step"]').forEach((el, i) => {
+                if (el.id.match(/^step\d$/)) {
+                    el.classList.toggle('hidden', parseInt(el.id.replace('step', '')) !== step);
+                }
+            });
+            
+            // Update step indicators
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById(`step${i}Dot`);
+                const line = document.getElementById(`step${i}Line`);
+                if (i < step) {
+                    dot.classList.add('bg-green-500', 'text-white');
+                    dot.classList.remove('bg-gray-300', 'text-gray-600');
+                    if (line) line.classList.add('bg-green-500');
+                } else if (i === step) {
+                    dot.classList.add('bg-green-500', 'text-white');
+                    dot.classList.remove('bg-gray-300', 'text-gray-600');
+                } else {
+                    dot.classList.remove('bg-green-500', 'text-white');
+                    dot.classList.add('bg-gray-300', 'text-gray-600');
+                    if (line) line.classList.remove('bg-green-500');
+                }
+            }
+        }
+
+        function simulateCamera() {
+            selectedPhoto = true;
+            document.getElementById('photoPreview').innerHTML = `
+                <div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                    <div class="text-center">
+                        <span class="text-4xl">📸</span>
+                        <p class="text-gray-600 text-sm mt-2">Photo captured!</p>
+                    </div>
+                </div>
+            `;
+            showToast('Photo captured successfully!');
+        }
+
+        function simulateGallery() {
+            selectedPhoto = true;
+            document.getElementById('photoPreview').innerHTML = `
+                <div class="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                    <div class="text-center">
+                        <span class="text-4xl">🖼️</span>
+                        <p class="text-gray-600 text-sm mt-2">Photo selected!</p>
+                    </div>
+                </div>
+            `;
+            showToast('Photo selected from gallery!');
+        }
+
+        function getCurrentLocation() {
+            selectedLocation = 'Current Location (24.8607° N, 67.0011° E)';
+            document.getElementById('locationText').textContent = selectedLocation;
+            showToast('Location detected!');
+        }
+
+        function selectLandmark() {
+            const landmark = document.getElementById('landmarkSelect').value;
+            if (landmark) {
+                selectedLocation = landmark;
+                document.getElementById('locationText').textContent = 'Near ' + landmark;
+            }
+        }
+
+        function resetReportForm() {
+            currentStep = 1;
+            selectedPhoto = false;
+            selectedLocation = '';
+            document.getElementById('categorySelect').value = '';
+            document.getElementById('titleInput').value = '';
+            document.getElementById('descInput').value = '';
+            document.getElementById('landmarkSelect').value = '';
+            document.getElementById('photoPreview').innerHTML = `
+                <div class="text-center">
+                    <span class="text-4xl">📷</span>
+                    <p class="text-gray-500 text-sm mt-2">No photo selected</p>
+                </div>
+            `;
+            document.getElementById('locationText').textContent = 'Tap to select location';
+            goToStep(1);
+        }
+
+        function submitReport() {
+            const newReport = {
+                id: reports.length + 1,
+                title: document.getElementById('titleInput').value,
+                category: document.getElementById('categorySelect').value,
+                description: document.getElementById('descInput').value,
+                location: selectedLocation || document.getElementById('landmarkSelect').value || 'Not specified',
+                status: 'Pending',
+                department: null,
+                createdAt: new Date().toISOString().split('T')[0],
+                photo: selectedPhoto,
+                userId: 1,
+                timeline: [
+                    { status: 'Pending', date: new Date().toLocaleString(), note: 'Report submitted' }
+                ]
+            };
+            
+            reports.unshift(newReport);
+            showToast('Report submitted successfully!');
+            showScreen('myReportsScreen');
+        }
+
+        function renderRecentReports() {
+            const userReports = reports.filter(r => r.userId === 1).slice(0, 3);
+            document.getElementById('recentReportsList').innerHTML = userReports.map(r => `
+                <div class="flatlist-item bg-white p-4 rounded-xl shadow-sm" onclick="viewReportDetail(${r.id})">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span>${getCategoryIcon(r.category)}</span>
+                                <h3 class="font-semibold text-gray-800">${r.title}</h3>
+                            </div>
+                            <p class="text-gray-500 text-sm">${r.location}</p>
+                        </div>
+                        <span class="status-badge ${getStatusColor(r.status)}">${r.status}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderMyReports() {
+            let userReports = reports.filter(r => r.userId === 1);
+            if (currentFilter !== 'all') {
+                userReports = userReports.filter(r => r.status === currentFilter);
+            }
+            
+            document.getElementById('myReportsList').innerHTML = userReports.length ? userReports.map(r => `
+                <div class="flatlist-item bg-white p-4 rounded-xl shadow-sm" onclick="viewReportDetail(${r.id})">
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">${getCategoryIcon(r.category)}</span>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">${r.title}</h3>
+                                <p class="text-gray-500 text-xs">${r.createdAt}</p>
+                            </div>
+                        </div>
+                        <span class="status-badge ${getStatusColor(r.status)}">${r.status}</span>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-2">${r.description.substring(0, 60)}...</p>
+                    <div class="flex items-center gap-2 text-gray-400 text-xs">
+                        <span>📍 ${r.location}</span>
+                        ${r.photo ? '<span>📷</span>' : ''}
+                    </div>
+                </div>
+            `).join('') : '<p class="text-center text-gray-500 py-8">No reports found</p>';
+        }
+
+        function filterUserReports(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('bg-green-500', btn.dataset.filter === filter);
+                btn.classList.toggle('text-white', btn.dataset.filter === filter);
+                btn.classList.toggle('bg-gray-200', btn.dataset.filter !== filter);
+                btn.classList.toggle('text-gray-700', btn.dataset.filter !== filter);
+            });
+            renderMyReports();
+        }
+
+        function viewReportDetail(id) {
+            const report = reports.find(r => r.id === id);
+            if (!report) return;
+            
+            document.getElementById('reportDetailContent').innerHTML = `
+                <div class="bg-white rounded-2xl p-4 mb-4 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-3xl">${getCategoryIcon(report.category)}</span>
+                        <span class="status-badge ${getStatusColor(report.status)}">${report.status}</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">${report.title}</h2>
+                    <p class="text-gray-600 mb-3">${report.description}</p>
+                    <div class="flex items-center gap-4 text-sm text-gray-500">
+                        <span>📍 ${report.location}</span>
+                        <span>📅 ${report.createdAt}</span>
+                    </div>
+                </div>
+                
+                ${report.photo ? `
+                <div class="bg-white rounded-2xl p-4 mb-4 shadow-sm">
+                    <h3 class="font-semibold text-gray-800 mb-3">Photo Evidence</h3>
+                    <div class="w-full h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
+                        <span class="text-4xl">📷</span>
+                    </div>
+                </div>
+                ` : ''}
+                
+                <div class="bg-white rounded-2xl p-4 shadow-sm">
+                    <h3 class="font-semibold text-gray-800 mb-4">Status Timeline</h3>
+                    <div class="space-y-4">
+                        ${report.timeline.map((t, i) => `
+                            <div class="flex items-start gap-3">
+                                <div class="flex flex-col items-center">
+                                    <div class="timeline-dot ${getTimelineDotColor(t.status)}"></div>
+                                    ${i < report.timeline.length - 1 ? `<div class="timeline-line bg-gray-200"></div>` : ''}
+                                </div>
+                                <div class="flex-1 pb-4">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-gray-800">${t.status}</span>
+                                        <span class="text-xs text-gray-400">${t.date}</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500">${t.note}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            showScreen('reportDetailScreen');
+        }
+
+        // ==================== ADMIN FUNCTIONS ====================
+        function adminLogin() {
+            showAdminScreen('adminDashboard');
+            showToast('Welcome, Admin!');
+        }
+
+        function updateAdminDashboard() {
+            document.getElementById('adminTotalReports').textContent = reports.length;
+            document.getElementById('adminPendingReports').textContent = reports.filter(r => r.status === 'Pending').length;
+            document.getElementById('adminProgressReports').textContent = reports.filter(r => r.status === 'In Progress' || r.status === 'Assigned').length;
+            document.getElementById('adminResolvedReports').textContent = reports.filter(r => r.status === 'Resolved').length;
+            
+            // Department stats
+            const deptStats = departments.slice(0, 5).map(d => {
+                const count = reports.filter(r => r.category === d.id).length;
+                const percentage = (count / reports.length * 100).toFixed(0);
+                return `
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">${d.icon}</span>
+                        <div class="flex-1">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-slate-300">${d.name}</span>
+                                <span class="text-slate-400">${count}</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full ${d.color} rounded-full" style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('departmentStats').innerHTML = deptStats;
+        }
+
+        function renderAdminRecentReports() {
+            document.getElementById('adminRecentReports').innerHTML = reports.slice(0, 4).map(r => `
+                <div class="flatlist-item bg-slate-800 p-4 rounded-xl" onclick="viewAdminReportDetail(${r.id})">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">${getCategoryIcon(r.category)}</span>
+                            <div>
+                                <h3 class="font-medium text-white">${r.title}</h3>
+                                <p class="text-slate-400 text-xs">${r.location}</p>
+                            </div>
+                        </div>
+                        <span class="status-badge ${getStatusColor(r.status)}">${r.status}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAdminReports() {
+            let filteredReports = [...reports];
+            if (currentFilter !== 'all') {
+                filteredReports = filteredReports.filter(r => r.status === currentFilter);
+            }
+            if (currentDeptFilter !== 'all') {
+                filteredReports = filteredReports.filter(r => r.category === currentDeptFilter);
+            }
+            
+            document.getElementById('adminReportsList').innerHTML = filteredReports.map(r => `
+                <div class="flatlist-item bg-slate-800 p-4 rounded-xl" onclick="viewAdminReportDetail(${r.id})">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">${getCategoryIcon(r.category)}</span>
+                            <div>
+                                <h3 class="font-medium text-white">${r.title}</h3>
+                                <p class="text-slate-400 text-xs">ID: #${r.id} • ${r.createdAt}</p>
+                            </div>
+                        </div>
+                        <span class="status-badge ${getStatusColor(r.status)}">${r.status}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-slate-400 text-xs">
+                        <span>📍 ${r.location}</span>
+                        <span>${r.department ? `Assigned to ${r.department}` : 'Unassigned'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterAdminReports(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.admin-filter-btn').forEach(btn => {
+                btn.classList.toggle('bg-purple-500', btn.dataset.filter === filter);
+                btn.classList.toggle('text-white', btn.dataset.filter === filter);
+                btn.classList.toggle('bg-slate-700', btn.dataset.filter !== filter);
+                btn.classList.toggle('text-slate-300', btn.dataset.filter !== filter);
+            });
+            renderAdminReports();
+        }
+
+        function filterByDepartment() {
+            currentDeptFilter = document.getElementById('deptFilter').value;
+            renderAdminReports();
+        }
+
+        function viewAdminReportDetail(id) {
+            const report = reports.find(r => r.id === id);
+            if (!report) return;
+            
+            const statuses = ['Pending', 'Assigned', 'In Progress', 'Resolved', 'Closed'];
+            
+            document.getElementById('adminReportDetailContent').innerHTML = `
+                <div class="bg-slate-800 rounded-2xl p-4 mb-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-3xl">${getCategoryIcon(report.category)}</span>
+                        <span class="status-badge ${getStatusColor(report.status)}">${report.status}</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-white mb-2">${report.title}</h2>
+                    <p class="text-slate-300 mb-3">${report.description}</p>
+                    <div class="flex items-center gap-4 text-sm text-slate-400">
+                        <span>📍 ${report.location}</span>
+                        <span>📅 ${report.createdAt}</span>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-800 rounded-2xl p-4 mb-4">
+                    <h3 class="font-semibold text-white mb-3">Assign Department</h3>
+                    <select id="assignDept" class="w-full p-3 bg-slate-700 border border-slate-600 rounded-xl text-white" onchange="assignDepartment(${report.id})">
+                        <option value="">Select Department</option>
+                        ${departments.map(d => `<option value="${d.id}" ${report.department === d.id ? 'selected' : ''}>${d.icon} ${d.name}</option>`).join('')}
+                    </select>
+                </div>
+                
+                <div class="bg-slate-800 rounded-2xl p-4 mb-4">
+                    <h3 class="font-semibold text-white mb-3">Update Status</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        ${statuses.map(s => `
+                            <button onclick="updateStatus(${report.id}, '${s}')" class="p-3 rounded-xl text-sm font-medium ${report.status === s ? 'bg-purple-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}">
+                                ${s}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="bg-slate-800 rounded-2xl p-4">
+                    <h3 class="font-semibold text-white mb-4">Timeline</h3>
+                    <div class="space-y-4">
+                        ${report.timeline.map((t, i) => `
+                            <div class="flex items-start gap-3">
+                                <div class="flex flex-col items-center">
+                                    <div class="timeline-dot ${getTimelineDotColor(t.status)}"></div>
+                                    ${i < report.timeline.length - 1 ? `<div class="timeline-line bg-slate-600"></div>` : ''}
+                                </div>
+                                <div class="flex-1 pb-4">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-white">${t.status}</span>
+                                        <span class="text-xs text-slate-400">${t.date}</span>
+                                    </div>
+                                    <p class="text-sm text-slate-400">${t.note}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            showAdminScreen('adminReportDetailScreen');
+        }
+
+        function assignDepartment(id) {
+            const report = reports.find(r => r.id === id);
+            const dept = document.getElementById('assignDept').value;
+            if (report && dept) {
+                report.department = dept;
+                if (report.status === 'Pending') {
+                    report.status = 'Assigned';
+                    report.timeline.push({
+                        status: 'Assigned',
+                        date: new Date().toLocaleString(),
+                        note: `Assigned to ${dept} department`
+                    });
+                }
+                showToast(`Assigned to ${dept} department`);
+                viewAdminReportDetail(id);
+            }
+        }
+
+        function updateStatus(id, status) {
+            const report = reports.find(r => r.id === id);
+            if (report) {
+                report.status = status;
+                report.timeline.push({
+                    status: status,
+                    date: new Date().toLocaleString(),
+                    note: `Status updated to ${status}`
+                });
+                showToast(`Status updated to ${status}`);
+                viewAdminReportDetail(id);
+            }
+        }
+
+        // ==================== HELPERS ====================
+        function getCategoryIcon(category) {
+            const icons = {
+                'Garbage': '🗑️', 'Electricity': '⚡', 'Water': '💧', 'Gas': '🔥',
+                'Roads': '🛣️', 'Sewerage': '🚰', 'Streetlights': '💡', 'Other': '📋'
+            };
+            return icons[category] || '📋';
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'Pending': 'bg-amber-100 text-amber-700',
+                'Assigned': 'bg-blue-100 text-blue-700',
+                'In Progress': 'bg-purple-100 text-purple-700',
+                'Resolved': 'bg-green-100 text-green-700',
+                'Closed': 'bg-gray-100 text-gray-700'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-700';
+        }
+
+        function getTimelineDotColor(status) {
+            const colors = {
+                'Pending': 'bg-amber-500',
+                'Assigned': 'bg-blue-500',
+                'In Progress': 'bg-purple-500',
+                'Resolved': 'bg-green-500',
+                'Closed': 'bg-gray-500'
+            };
+            return colors[status] || 'bg-gray-500';
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.toggle('bg-green-500', type === 'success');
+            toast.classList.toggle('bg-red-500', type === 'error');
+            toast.classList.remove('translate-x-full');
+            setTimeout(() => toast.classList.add('translate-x-full'), 3000);
+        }
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            showScreen('homeScreen');
+            renderRecentReports();
+            updateUserStats();
+        });
+    </script>
+</body>
+</html>
